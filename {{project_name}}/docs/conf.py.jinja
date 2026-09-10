@@ -30,8 +30,10 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 html_theme = "furo"
 {% if spiri_branding -%}
 html_static_path: list[str] = ["static"]
+html_css_files = ["custom.css"]
 {%- else %}
 html_static_path: list[str] = []
+html_css_files = []
 {%- endif %}
 
 {% if spiri_branding -%}
