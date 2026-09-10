@@ -1,0 +1,6 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "slow: tests that take a significant amount of time (e2e, generated project)",
+    "integration: tests that require copier to generate a full project",
+]

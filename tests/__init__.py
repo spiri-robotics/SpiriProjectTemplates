@@ -1,0 +1,1 @@
+# SpiriProjectTemplates tests
