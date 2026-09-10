@@ -28,12 +28,16 @@ templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 html_theme = "furo"
+{% if spiri_branding -%}
+html_static_path: list[str] = ["static"]
+{%- else %}
 html_static_path: list[str] = []
+{%- endif %}
 
 {% if spiri_branding -%}
 html_theme_options = {
-    "light_logo": "logo.svg",
-    "dark_logo": "logo-dark.svg",
+    "light_logo": "spiri-logo-light.svg",
+    "dark_logo": "spiri-logo-dark.svg",
     "sidebar_hide_name": True,
 }
 {%- else %}
