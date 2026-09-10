@@ -11,25 +11,25 @@ class TestGeneratedProject:
 
     def test_project_files_created(self, generated_project, variables):
         """Generated project should have key files in expected locations."""
-        nested_project = generated_project / variables["project_name"]
+        generated = generated_project
         
-        assert (nested_project / "pyproject.toml").exists()
-        assert (nested_project / "README.md").exists()
-        assert (nested_project / "src").is_dir()
-        assert (nested_project / "tests").is_dir()
+        assert (generated / "pyproject.toml").exists()
+        assert (generated / "README.md").exists()
+        assert (generated / "src").is_dir()
+        assert (generated / "tests").is_dir()
         
-        src_files = list((nested_project / "src").rglob("*.py"))
+        src_files = list((generated / "src").rglob("*.py"))
         assert len(src_files) >= 2  # __init__.py and cli.py
         
-        test_files = list((nested_project / "tests").rglob("*.py"))
+        test_files = list((generated / "tests").rglob("*.py"))
         assert len(test_files) >= 1  # test_cli.py
 
     def test_pyproject_toml_valid(self, generated_project, variables):
         """Generated pyproject.toml should be valid TOML with correct metadata."""
         import toml
         
-        nested_project = generated_project / variables["project_name"]
-        toml_content = toml.load(nested_project / "pyproject.toml")
+        generated = generated_project
+        toml_content = toml.load(generated / "pyproject.toml")
         
         assert toml_content["project"]["name"] == variables["project_name"]
         assert "scripts" in toml_content["project"]
@@ -38,8 +38,8 @@ class TestGeneratedProject:
         """Generated compose files should exist when templates are present."""
         import yaml
         
-        nested_project = generated_project / variables["project_name"]
-        compose_path = nested_project / "templates" / "compose.yaml"
+        generated = generated_project
+        compose_path = generated / "templates" / "compose.yaml"
         
         if compose_path.exists():
             content = yaml.safe_load(compose_path.read_text())
