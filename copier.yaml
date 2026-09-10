@@ -3,6 +3,11 @@
 # To use: uvx copier https://github.com/spiri-robotics/SpiriProjectTemplates ./new-project
 
 # ---------------------------------------------------------------------------
+# Copier options
+
+_subdirectory: _project_template
+
+# ---------------------------------------------------------------------------
 # Template variables (copier questions)
 
 project_name:
@@ -18,7 +23,7 @@ python_version:
 python_package_name:
   type: str
   help: Python package name (auto-populated from project_name)
-  default: ""
+  default: "{{project_name|replace('-', '_')|replace('.', '_')}}"
 
 description:
   type: str
@@ -74,12 +79,6 @@ include_nix:
   type: bool
   help: Include a flake.nix for reproducible builds?
   default: true
-
-# ---------------------------------------------------------------------------
-# Copier options
-
-_subdirectories:
-  - "{{project_name}}"
 
 _answers_file: .copier-answers.yaml
 answers_file: ".copier-answers.yaml"

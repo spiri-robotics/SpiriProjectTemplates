@@ -10,7 +10,7 @@ import copier
 import jinja2
 import pytest
 
-TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "{{project_name}}"
+TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "_project_template"
 
 DEFAULT_VARIABLES = {
     "project_name": "my-sensor",
@@ -33,13 +33,13 @@ JINJA_FILES = [
     "pyproject.toml.jinja",
     "README.md.jinja",
     "Makefile.jinja",
-    "python-version.jinja",  # placeholder - actual file may differ
     # Source files (nested under src/{{python_package_name}}/)
-    "src/__init.py.jinja",  # placeholder
-    "src/cli.py.jinja",
-    "src/main.py.jinja",
-    "src/web.py.jinja",
+    "src/{{python_package_name}}/__init__.py.jinja",
+    "src/{{python_package_name}}/cli.py.jinja",
+    "src/{{python_package_name}}/main.py.jinja",
+    "src/{{python_package_name}}/web.py.jinja",
     # Test files
+    "tests/__init__.py",
     "tests/test_cli.py.jinja",
     # Docker
     "docker/Dockerfile.jinja",
