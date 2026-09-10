@@ -1,0 +1,29 @@
+"""Tests for {{project_name}} CLI."""
+
+from __future__ import annotations
+
+from {{python_package_name}}.cli import app
+
+
+def test_cli_version() -> None:
+    """Test CLI version command."""
+{% if include_tests %}
+    from typer.testing import CliRunner
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["version"])
+    assert result.exit_code == 0
+
+
+def test_cli_help() -> None:
+    """Test CLI help command."""
+    from typer.testing import CliRunner
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["--help"])
+    assert result.exit_code == 0
+    assert "{{project_name}}" in result.stdout
+{% else %}
+    # Placeholder test. Set include_tests=true to generate full test suite.
+    pass
+{% endif %}

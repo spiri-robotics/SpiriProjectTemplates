@@ -1,0 +1,65 @@
+# {{project_name}}
+
+{{description}}
+
+## Getting Started
+
+### Installation
+
+```console
+# Install dependencies
+uv sync
+
+# Generate lock file
+uv lock
+```
+
+### Run
+
+```console
+{{project_name}} --help
+```
+
+### Run as module
+
+```console
+python -m {{python_package_name}}
+```
+
+## Development
+
+```console
+# Run tests
+python -m pytest
+python -m pytest --cov={{python_package_name}}
+
+# Run type checking
+python -m mypy src/ 2>/dev/null
+```
+{% if include_docs -%}
+
+## Documentation
+
+```console
+# Install docs dependencies
+uv sync
+python -m pip install -r docs/requirements.txt
+
+# Build HTML docs
+sphinx-build -b html docs docs/_build
+
+# View docs locally
+python -m http.server --directory docs/_build 8888
+```
+{% endif %}
+
+## License
+{% if license == "Apache-2.0" -%}
+Licensed under the Apache License, Version 2.0.
+{% elif license == "BSD-3-Clause" -%}
+Licensed under the BSD 3-Clause License.
+{% elif license == "GPL-3.0-or-later" -%}
+Licensed under the GNU General Public License v3.0 or later.
+{% else -%}
+Licensed under the MIT License.
+{% endif %}

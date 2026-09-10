@@ -1,0 +1,55 @@
+# Getting Started
+
+This guide walks you through installing, configuring, and running {{project_name}}.
+
+## Installation
+
+Add {{project_name}} to your project:
+
+```console
+uv add {{project_name}}
+```
+
+Or install from source:
+
+```console
+uv sync
+uv lock
+```
+
+## Configuration
+
+{{project_name}} runs with sensible defaults. If you need to customize, set environment variables with the `{{python_package_name|upper}}_` prefix:
+
+```console
+export {{python_package_name|upper}}_ENVIRONMENT=production
+export {{python_package_name|upper}}_LOG_LEVEL=DEBUG
+```
+
+Or create a `.env` file in your project root. See the {ref}`api-reference` for all available options.
+
+## Quick Start
+
+Run the CLI:
+
+```console
+{{project_name}} --help
+```
+
+Or run as a module:
+
+```console
+python -m {{python_package_name}}
+```
+
+For verbose output:
+
+```console
+{{project_name}} run --verbose
+```
+
+## Next Steps
+
+- Read the {ref}`api-reference` for programmatic details
+- Check the [pyproject.toml](https://github.com/spiri-robotics/spiri-app-template/blob/main/pyproject.toml) for build and dependency configuration
+- See the [Docker compose files](https://github.com/spiri-robotics/spiri-app-template/blob/main/templates/) for deployment options

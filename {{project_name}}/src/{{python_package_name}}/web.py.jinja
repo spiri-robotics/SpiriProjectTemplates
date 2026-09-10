@@ -1,0 +1,32 @@
+"""Web UI entry point for {{project_name}} (optional SpiriConfig plugin)."""
+
+from __future__ import annotations
+
+{% if spiri_config_plugin -%}
+from nicegui import ui
+
+from {{python_package_name}} import __version__
+
+
+def page() -> None:
+    """Render the web UI page."""
+    ui.label("{{project_name}}").classes("text-2xl font-bold")
+    ui.label(f"Version {{version}}").classes("text-sm text-gray-500")
+    ui.separator()
+
+    with ui.card():
+        ui.icon("rocket_launch").classes("text-4xl text-primary")
+        with ui.column():
+            ui.label("Status").classes("text-lg font-bold")
+            ui.switch("Running").props("color=green")
+
+    with ui.card():
+        ui.label("Configuration").classes("text-lg font-bold")
+        ui.button("Configure", on_click=lambda: ui.notify("Configure clicked"))
+{% else -%}
+# This file is a placeholder. Enable spiri_config_plugin=true to generate a full web UI page.
+# Follow the example in the SpiriConfig docker plugin:
+#   - Subclass from spiriconfig.plugins.Plugin
+#   - Implement cli() -> typer.Typer
+#   - Implement page() -> None (renders to nicegui.ui)
+{% endif %}

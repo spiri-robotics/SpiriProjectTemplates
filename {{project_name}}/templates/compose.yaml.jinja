@@ -1,0 +1,29 @@
+# {{project_name}} Docker Compose - Production
+#
+# Deployed form: pulls image from registry.
+# Start with: docker compose -f templates/compose.yaml up -d
+#
+# Deployed as SpiriConfig plugin (when spiri_config_plugin=true):
+#   - Registers with SpiriConfig for management
+#   - Label-based discovery
+#   - Port 8337
+#
+# Deployed as standalone app (default):
+#   - Regular docker compose service
+{% if spiri_config_plugin -%}
+x-spiri-config-version: "{{version}}"
+{% endif %}
+services:
+  app:
+    image: ${COMPONENT_IMAGE:-{{project_name}}:latest}
+    restart: unless-stopped
+    environment:
+      - GREETING=${GREETING:-Hello from {{project_name}}}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+{% if spiri_config_plugin -%}
+    labels:
+      spiriconfig.plugin.name: {{project_name}}
+      spiriconfig.plugin.port: "8337"
+      spiriconfig.plugin.title: {{project_name}}
+{% endif %}

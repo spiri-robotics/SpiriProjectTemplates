@@ -1,0 +1,82 @@
+# Copier configuration for Spiri project templates.
+#
+# To use: uvx copier https://github.com/spiri-robotics/SpiriProjectTemplates ./new-project
+
+# ---------------------------------------------------------------------------
+# Template variables (copier questions)
+
+project_name:
+  type: str
+  help: Project name (e.g. "my-sensor-pipeline")
+  default: "my-spiri-project"
+
+python_version:
+  type: str
+  help: Minimum Python version
+  default: "3.13"
+
+python_package_name:
+  type: str
+  help: Python package name (auto-populated from project_name)
+  default: ""
+
+description:
+  type: str
+  help: Short one-line description
+  default: "A Spiri project"
+
+version:
+  type: str
+  help: Starting version
+  default: "0.1.0"
+
+author_name:
+  type: str
+  help: Author name
+  default: ""
+
+author_email:
+  type: str
+  help: Author email
+  default: ""
+
+license:
+  type: str
+  help: Software license
+  default: "MIT"
+  choices:
+    - MIT
+    - Apache-2.0
+    - BSD-3-Clause
+    - GPL-3.0-or-later
+
+spiri_config_plugin:
+  type: bool
+  help: Add SpiriConfig plugin interface (entry point registration, plugin class)?
+  default: false
+
+include_tests:
+  type: bool
+  help: Include a tests/ directory with pytest setup and example test?
+  default: true
+
+include_docs:
+  type: bool
+  help: Include a docs/ directory with Sphinx setup?
+  default: false
+
+include_nix:
+  type: bool
+  help: Include a flake.nix for reproducible builds?
+  default: true
+
+# ---------------------------------------------------------------------------
+# Copier options
+
+_subdirectories:
+  - "{{project_name}}"
+
+_answers_file: .copier-answers.yaml
+answers_file: ".copier-answers.yaml"
+
+conflict: old
