@@ -13,7 +13,7 @@ uv tool install copier
 Generate a new project:
 
 ```console
-copier copy https://github.com/spiri-robotics/SpiriProjectTemplates ./my-project --trust
+copier copy https://github.com/spiri-robotics/SpiriProjectTemplates ./my-project
 ```
 
 Or with explicit variables:
@@ -23,8 +23,7 @@ copier copy https://github.com/spiri-robotics/SpiriProjectTemplates ./my-project
   --data="project_name=my-sensor" \\
   --data="spiri_config_plugin=true" \\
   --data="include_docs=true" \\
-  --data="author_name=Your Name" \\
-  --trust
+  --data="author_name=Your Name"
 ```
 
 After generation:
