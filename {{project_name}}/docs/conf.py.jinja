@@ -8,7 +8,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 project = "{{project_name}}"
+{% if spiri_branding -%}
 copyright = "2026, Spiri"  # noqa: A001
+{%- else -%}
+copyright = "2026, {{author_name or 'Project Authors'}}"  # noqa: A001
+{%- endif %}
 author = "{{author_name}}"
 release = "{{version}}"
 
@@ -26,11 +30,17 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 html_theme = "furo"
 html_static_path: list[str] = []
 
+{% if spiri_branding -%}
 html_theme_options = {
     "light_logo": "logo.svg",
     "dark_logo": "logo-dark.svg",
     "sidebar_hide_name": True,
 }
+{%- else %}
+html_theme_options = {
+    "sidebar_hide_name": True,
+}
+{%- endif %}
 
 # Autodoc settings
 autodoc_default_options = {

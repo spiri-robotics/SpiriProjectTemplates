@@ -65,6 +65,11 @@ include_docs:
   help: Include a docs/ directory with Sphinx setup?
   default: false
 
+spiri_branding:
+  type: bool
+  help: Use Spiri branding (copyright, logo, links to Spiri resources)?
+  default: false
+
 include_nix:
   type: bool
   help: Include a flake.nix for reproducible builds?

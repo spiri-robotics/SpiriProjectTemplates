@@ -17,14 +17,20 @@ dependencies = [
 {% endif %}
 ]
 {% if spiri_config_plugin -%}
-
-[project.optional-dependencies.spiriconfig]
-nicegui = ["nicegui>=3.14.0"]
-{% endif %}
 {% if include_docs -%}
 
-[project.optional-dependencies.docs]
-sphinx-docs = ["sphinx>=9.1.0", "furo>=2024.0", "myst-parser>=5.1.0"]
+[project.optional-dependencies]
+docs = ["sphinx>=9.1.0", "furo>=2024.0", "myst-parser>=5.1.0"]
+spiriconfig = ["nicegui>=3.14.0"]
+{% else -%}
+
+[project.optional-dependencies]
+spiriconfig = ["nicegui>=3.14.0"]
+{% endif %}
+{% elif include_docs -%}
+
+[project.optional-dependencies]
+docs = ["sphinx>=9.1.0", "furo>=2024.0", "myst-parser>=5.1.0"]
 {% endif %}
 {% if spiri_config_plugin -%}
 
