@@ -68,7 +68,8 @@ my-project/
 │       ├── main.py         # Main entry point with pydantic-settings
 │       └── web.py          # NiceGUI web page (conditional)
 │
-├── templates/
+├── docker/
+│   ├── Dockerfile
 │   ├── compose.yaml        # Production: pulls image from registry
 │   ├── compose.dev.yaml    # Development: builds from source + mounts src/
 │   └── compose.test.yaml   # CI: runs pytest inside container
@@ -115,8 +116,8 @@ To run as a SpiriConfig plugin:
 ```console
 cd my-project
 uv sync
-docker compose -f templates/compose.yaml -f templates/compose.dev.yaml up --build
-docker compose -f templates/compose.yaml -f templates/compose.dev.yaml ps
+docker compose -f docker/compose.yaml -f docker/compose.dev.yaml up --build
+docker compose -f docker/compose.yaml -f docker/compose.dev.yaml ps
 ```
 
 ## Docker Compose Split
@@ -128,7 +129,7 @@ The template uses the same pattern as SpiriConfig for managing deployments:
 Pulls a published image from a registry:
 
 ```console
-docker compose -f templates/compose.yaml up -d
+docker compose -f docker/compose.yaml up -d
 ```
 
 Variables:
@@ -142,7 +143,7 @@ Variables:
 Builds from local source and mounts `src/` for hot-reloading:
 
 ```console
-docker compose -f templates/compose.yaml -f templates/compose.dev.yaml up --build
+docker compose -f docker/compose.yaml -f docker/compose.dev.yaml up --build
 ```
 
 - Overrides `image` to `:dev` tag
@@ -154,13 +155,13 @@ docker compose -f templates/compose.yaml -f templates/compose.dev.yaml up --buil
 Runs pytest inside the container to catch environment differences from local dev:
 
 ```console
-docker compose -f templates/compose.yaml -f templates/compose.test.yaml run --rm test
+docker compose -f docker/compose.yaml -f docker/compose.test.yaml run --rm test
 ```
 
 ### Combined Development + Testing
 
 ```console
-docker compose -f templates/compose.yaml -f templates/compose.dev.yaml -f templates/compose.test.yaml run test
+docker compose -f docker/compose.yaml -f docker/compose.dev.yaml -f docker/compose.test.yaml run test
 ```
 
 ## VSCode Integration

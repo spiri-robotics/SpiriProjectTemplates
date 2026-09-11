@@ -37,21 +37,21 @@ class TestYAMLParsing:
 
     def test_compose_parses(self, variables):
         """compose.yaml should parse as valid YAML."""
-        content = _render_jinja_file("templates/compose.yaml.jinja", variables)
+        content = _render_jinja_file("docker/compose.yaml.jinja", variables)
         result = yaml.safe_load(content)
         assert result
         assert "services" in result
 
     def test_compose_dev_parses(self, variables):
         """compose.dev.yaml should parse as valid YAML."""
-        content = _render_jinja_file("templates/compose.dev.yaml.jinja", variables)
+        content = _render_jinja_file("docker/compose.dev.yaml.jinja", variables)
         result = yaml.safe_load(content)
         assert result
         assert "services" in result
 
     def test_compose_test_parses(self, variables):
         """compose.test.yaml should parse as valid YAML."""
-        content = _render_jinja_file("templates/compose.test.yaml.jinja", variables)
+        content = _render_jinja_file("docker/compose.test.yaml.jinja", variables)
         result = yaml.safe_load(content)
         assert result
         assert "services" in result

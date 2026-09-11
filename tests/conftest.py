@@ -44,9 +44,9 @@ JINJA_FILES = [
     # Docker
     "docker/Dockerfile.jinja",
     # Compose files
-    "templates/compose.yaml.jinja",
-    "templates/compose.dev.yaml.jinja",
-    "templates/compose.test.yaml.jinja",
+    "docker/compose.yaml.jinja",
+    "docker/compose.dev.yaml.jinja",
+    "docker/compose.test.yaml.jinja",
 ]
 
 

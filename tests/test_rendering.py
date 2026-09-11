@@ -47,22 +47,22 @@ class TestRenderedContent:
 
     def test_compose_project_name(self, rendered_template, variables):
         """Compose YAML should have project name."""
-        content = rendered_template("templates/compose.yaml.jinja")
+        content = rendered_template("docker/compose.yaml.jinja")
         assert variables["project_name"] in content
 
     def test_compose_dev_project_name(self, rendered_template, variables):
         """Compose dev YAML should have project name."""
-        content = rendered_template("templates/compose.dev.yaml.jinja")
+        content = rendered_template("docker/compose.dev.yaml.jinja")
         assert variables["project_name"] in content
 
     def test_compose_test_project_name(self, rendered_template, variables):
         """Compose test YAML should have project name."""
-        content = rendered_template("templates/compose.test.yaml.jinja")
+        content = rendered_template("docker/compose.test.yaml.jinja")
         assert variables["project_name"] in content
 
     def test_compose_greeting(self, rendered_template, variables):
         """Compose files should have correct greeting."""
-        content = rendered_template("templates/compose.yaml.jinja")
+        content = rendered_template("docker/compose.yaml.jinja")
         assert variables["project_name"] in content
 
     def test_makefile_target_name(self, rendered_template, variables):
