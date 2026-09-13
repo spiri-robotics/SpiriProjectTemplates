@@ -1,0 +1,128 @@
+{% set o = '{{' -%}
+{% set c = '}}' -%}
+name: Build and Publish Docker Image
+
+# Registry defaults to GHCR and needs no secrets there (uses GITHUB_TOKEN).
+# To publish elsewhere instead, set repository variables (Settings > Secrets
+# and variables > Actions > Variables) without touching this file:
+#   REGISTRY   - e.g. docker.io (default: ghcr.io)
+#   IMAGE_NAME - e.g. myorg/{{python_package_name}} (default: the GitHub repo name)
+# If REGISTRY is docker.io, also add DOCKERHUB_USERNAME and DOCKERHUB_TOKEN secrets.
+{% if app_store_repo %}
+#
+# On a release tag, also opens a PR against {{app_store_repo}} bumping
+# every compose.yaml{% if app_store_path %} under {{app_store_path}}{% endif %} whose image matches
+# this project's, to the new tag. One project can back several
+# app-store entries (e.g. a debug UI and a headless service sharing one
+# image) this way -- there is no requirement that the path match the
+# project name, or that there be only one. Requires an APP_STORE_TOKEN
+# secret (a PAT with push + PR access on that repo).
+{% endif %}
+on:
+  push:
+    branches: [main]
+    tags: ["v*.*.*"]
+
+env:
+  REGISTRY: ${{o}} vars.REGISTRY || 'ghcr.io' {{c}}
+  IMAGE_NAME: ${{o}} vars.IMAGE_NAME || github.repository {{c}}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{o}} env.REGISTRY {{c}}
+          username: ${{o}} env.REGISTRY == 'docker.io' && secrets.DOCKERHUB_USERNAME || github.actor {{c}}
+          password: ${{o}} env.REGISTRY == 'docker.io' && secrets.DOCKERHUB_TOKEN || secrets.GITHUB_TOKEN {{c}}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{o}} env.REGISTRY {{c}}/${{o}} env.IMAGE_NAME {{c}}
+          tags: |
+            type=semver,pattern={{o}}version{{c}}
+            type=semver,pattern={{o}}major{{c}}.{{o}}minor{{c}}
+            type=edge,branch=main
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: true
+          tags: ${{o}} steps.meta.outputs.tags {{c}}
+          labels: ${{o}} steps.meta.outputs.labels {{c}}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+{% if app_store_repo %}
+  update-app-store:
+    needs: build-and-push
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    env:
+      # secrets can't be read directly in an `if:` condition, only in `env:` --
+      # so it's hoisted here once and every step below checks env.APP_STORE_TOKEN
+      # instead, letting the whole job no-op rather than fail when the secret
+      # hasn't been set up yet.
+      APP_STORE_TOKEN: ${{o}} secrets.APP_STORE_TOKEN {{c}}
+    steps:
+      - name: Checkout project
+        if: ${{o}} env.APP_STORE_TOKEN != '' {{c}}
+        uses: actions/checkout@v4
+        with:
+          path: project
+
+      - name: Checkout app store
+        if: ${{o}} env.APP_STORE_TOKEN != '' {{c}}
+        uses: actions/checkout@v4
+        with:
+          repository: {{app_store_repo}}
+          token: ${{o}} env.APP_STORE_TOKEN {{c}}
+          path: app-store
+
+      - uses: actions/setup-python@v5
+        if: ${{o}} env.APP_STORE_TOKEN != '' {{c}}
+        with:
+          python-version: "3.13"
+
+      - name: Bump every matching compose.yaml
+        id: bump
+        if: ${{o}} env.APP_STORE_TOKEN != '' {{c}}
+        env:
+          IMAGE_REF: ${{o}} env.REGISTRY {{c}}/${{o}} env.IMAGE_NAME {{c}}
+          NEW_VERSION: ${{o}} github.ref_name {{c}}
+          SEARCH_ROOT: "app-store{% if app_store_path %}/{{app_store_path}}{% endif %}"
+        run: |
+          pip install --quiet ruamel.yaml
+          changed=$(python3 project/.github/scripts/bump_app_store_compose.py \
+            --search-root "$SEARCH_ROOT" --image-ref "$IMAGE_REF" --version "$NEW_VERSION")
+          echo "Bumped: $changed"
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+
+      - name: Open pull request
+        if: ${{o}} env.APP_STORE_TOKEN != '' {{c}}
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{o}} env.APP_STORE_TOKEN {{c}}
+          path: app-store
+          branch: release-{{python_package_name}}-${{o}} github.ref_name {{c}}
+          commit-message: "{{project_name}}: release ${{o}} github.ref_name {{c}}"
+          title: "{{project_name}}: release ${{o}} github.ref_name {{c}}"
+          body: |
+            Automated update from the [{{project_name}}](${{o}} github.server_url {{c}}/${{o}} github.repository {{c}}) release workflow.
+
+            Bumps to `${{o}} github.ref_name {{c}}`:
+            ${{o}} steps.bump.outputs.changed {{c}}
+{% endif %}

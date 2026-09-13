@@ -27,7 +27,21 @@ jobs:
         run: uv venv
 
       - name: Install dependencies
-        run: uv pip install pytest copier jinja2 toml pyyaml
+        run: uv pip install pytest copier jinja2 toml pyyaml ruamel.yaml
 
       - name: Run tests
         run: uv run pytest tests/ -v
+
+      - name: Generate sample projects for workflow linting
+        run: |
+          uv run copier copy --trust --defaults . /tmp/sample-default
+          uv run copier copy --trust --defaults \
+            --data app_store_repo=spiri-robotics/spiri-apps \
+            --data app_store_path=demo \
+            . /tmp/sample-appstore
+
+      - name: Install actionlint
+        run: curl -sL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash | bash
+
+      - name: Lint generated GitHub Actions workflows
+        run: ./actionlint /tmp/sample-default/.github/workflows/*.yml /tmp/sample-appstore/.github/workflows/*.yml

@@ -80,6 +80,25 @@ include_nix:
   help: Include a flake.nix for reproducible builds?
   default: true
 
+app_store_repo:
+  type: str
+  help: >-
+    GitHub repo (owner/name) of a compose-based app store to open a PR
+    against on release (e.g. spiri-robotics/spiri-apps). Leave blank to
+    skip this. Requires an APP_STORE_TOKEN secret on the generated repo.
+  default: ""
+
+app_store_path:
+  type: str
+  help: >-
+    Optional subdirectory to restrict the search to. On release, every
+    compose.yaml under this path (the whole repo if left blank) whose
+    image matches this project's gets its tag bumped -- so one project
+    backing several app-store entries (e.g. a debug UI and a headless
+    service sharing one image) needs no extra configuration here.
+  default: ""
+  when: "{{ app_store_repo != '' }}"
+
 _answers_file: .copier-answers.yaml
 answers_file: ".copier-answers.yaml"
 

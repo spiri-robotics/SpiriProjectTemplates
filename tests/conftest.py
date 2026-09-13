@@ -25,6 +25,8 @@ DEFAULT_VARIABLES = {
     "include_tests": True,
     "include_docs": False,
     "include_nix": False,
+    "app_store_repo": "",
+    "app_store_path": "",
 }
 
 
@@ -158,6 +160,8 @@ def generated_project(variables):
                 "include_tests": variables.get("include_tests", True),
                 "include_docs": variables.get("include_docs", False),
                 "include_nix": variables.get("include_nix", False),
+                "app_store_repo": variables.get("app_store_repo", ""),
+                "app_store_path": variables.get("app_store_path", ""),
             },
             unsafe=True,
             defaults=True,

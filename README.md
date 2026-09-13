@@ -51,6 +51,8 @@ my-sensor --help
 | `include_tests` | bool | `true` | Include `tests/` directory with pytest setup? |
 | `include_docs` | bool | `false` | Include `docs/` directory with Sphinx setup? |
 | `include_nix` | bool | `true` | Include `nix/flake.nix` for reproducible builds? |
+| `app_store_repo` | str | `""` | GitHub repo (`owner/name`) of a compose-based app store to open a release PR against. Blank disables the feature. |
+| `app_store_path` | str | `""` | Optional subdirectory to restrict the search to; blank searches the whole app store repo. Only asked when `app_store_repo` is set. |
 
 ## Generated Structure
 
@@ -76,6 +78,12 @@ my-project/
 │
 ├── docker/
 │   └── Dockerfile          # Multi-stage build (builder → runtime)
+│
+├── .github/
+│   └── workflows/
+│       ├── lint-test.yml
+│       ├── docs.yml            # Conditional
+│       └── docker-publish.yml  # Builds + pushes image on tags/main
 │
 ├── tests/                  # Conditional
 │   ├── __init__.py
@@ -163,6 +171,27 @@ docker compose -f docker/compose.yaml -f docker/compose.test.yaml run --rm test
 ```console
 docker compose -f docker/compose.yaml -f docker/compose.dev.yaml -f docker/compose.test.yaml run test
 ```
+
+## Docker Image Publishing
+
+`.github/workflows/docker-publish.yml` builds and pushes an image on every push to `main` (tagged `edge`) and on version tags matching `v*.*.*` (tagged with the semver, e.g. `1.2.3` and `1.2`).
+
+It publishes to GHCR by default using the built-in `GITHUB_TOKEN` — no setup required. To publish elsewhere instead, set repository variables (**Settings → Secrets and variables → Actions → Variables**) without editing the workflow:
+
+- `REGISTRY` — e.g. `docker.io` (default: `ghcr.io`)
+- `IMAGE_NAME` — e.g. `myorg/my-project` (default: the GitHub repo name)
+
+If `REGISTRY` is `docker.io`, also add `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets.
+
+### App Store Release PRs
+
+When `app_store_repo` is set at generation time, the workflow gains an `update-app-store` job that runs only on version tags (`v*.*.*`, not on plain `main`/`edge` builds). It:
+
+1. Checks out `app_store_repo`
+2. Walks every `compose.yaml` under `app_store_path` (the whole repo if blank), bumps the `image:` tag of any service that matches this project's image, and sets `x-spiri-config-version` to the release version (see [SpiriConfig's app store format](https://github.com/spiri-robotics/SpiriConfig/blob/main/docs/appstore.md)) — one project can back several app-store entries this way, e.g. a debug UI and a headless service sharing the same image
+3. Opens a single PR against `app_store_repo` with every change from step 2
+
+This requires an `APP_STORE_TOKEN` secret on the generated repo: a PAT with push + pull-request access to `app_store_repo` (the default `GITHUB_TOKEN` can't reach a different repository). Without that secret set, the job is skipped rather than failing.
 
 ## VSCode Integration
 
