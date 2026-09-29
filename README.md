@@ -51,8 +51,6 @@ my-sensor --help
 | `include_tests` | bool | `true` | Include `tests/` directory with pytest setup? |
 | `include_docs` | bool | `false` | Include `docs/` directory with Sphinx setup? |
 | `include_nix` | bool | `true` | Include `nix/flake.nix` for reproducible builds? |
-| `app_store_repo` | str | `""` | GitHub repo (`owner/name`) of a compose-based app store to open a release PR against. Blank disables the feature. |
-| `app_store_path` | str | `""` | Optional subdirectory to restrict the search to; blank searches the whole app store repo. Only asked when `app_store_repo` is set. |
 
 ## Generated Structure
 
@@ -183,15 +181,25 @@ It publishes to GHCR by default using the built-in `GITHUB_TOKEN` — no setup r
 
 If `REGISTRY` is `docker.io`, also add `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets.
 
-### App Store Release PRs
+### Getting Releases into an App Store
 
-When `app_store_repo` is set at generation time, the workflow gains an `update-app-store` job that runs only on version tags (`v*.*.*`, not on plain `main`/`edge` builds). It:
+The generated project doesn't touch any app store itself, so it needs no credentials for one. Instead, the app store tracks the published image with Dependabot, which opens a version-bump PR there whenever a new release tag appears:
 
-1. Checks out `app_store_repo`
-2. Walks every `compose.yaml` under `app_store_path` (the whole repo if blank), bumps the `image:` tag of any service that matches this project's image, and sets `x-spiri-config-version` to the release version (see [SpiriConfig's app store format](https://github.com/spiri-robotics/SpiriConfig/blob/main/docs/appstore.md)) — one project can back several app-store entries this way, e.g. a debug UI and a headless service sharing the same image
-3. Opens a single PR against `app_store_repo` with every change from step 2
+```yaml
+# .github/dependabot.yml, in the app store repo
+version: 2
+updates:
+  - package-ecosystem: docker-compose
+    directories: ["/my-project*"]
+    schedule:
+      interval: daily
+```
 
-This requires an `APP_STORE_TOKEN` secret on the generated repo: a PAT with push + pull-request access to `app_store_repo` (the default `GITHUB_TOKEN` can't reach a different repository). Without that secret set, the job is skipped rather than failing.
+For this to work:
+
+- Each app's `compose.yaml` pins a version tag (`ghcr.io/my-org/my-project:1.2.3`), not `:latest` — Dependabot only bumps version tags.
+- The image is public, or the app store's Dependabot config has a registry credential for it.
+- Leave `x-spiri-config-version` out of those apps. Dependabot won't update it, and without it [SpiriConfig](https://github.com/spiri-robotics/SpiriConfig/blob/main/docs/appstore.md) shows the date of the last commit that touched the app, which the bump PRs keep current.
 
 ## VSCode Integration
 
