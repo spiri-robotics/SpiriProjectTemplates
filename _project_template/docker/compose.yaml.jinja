@@ -17,6 +17,13 @@ services:
   app:
     image: ${COMPONENT_IMAGE:-{{project_name}}:latest}
     restart: unless-stopped
+    volumes:
+      # Bind-mount the host's hostname (under a dedicated path, not
+      # /etc/hostname, so we don't clobber the container's own hostname
+      # identity) so containers can identify which machine they're
+      # running on (a container's own hostname is per-container, not
+      # per-host, and drifts from it).
+      - /etc/hostname:/etc/spirisynq_base_topic:ro
     environment:
       - GREETING=${GREETING:-Hello from {{project_name}}}
       - ENVIRONMENT=${ENVIRONMENT:-production}
