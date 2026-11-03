@@ -59,13 +59,16 @@ jobs:
         id: doc
         run: uv run python -m spiri_docs fields >> "$GITHUB_OUTPUT"
       # texlive-latex-extra carries the packages Sphinx's LaTeX output expects;
-      # librsvg2-bin converts the SVG cover logo, which pdflatex can't read.
+      # texlive-xetex, FreeFont and xindy are what Sphinx's XeLaTeX output uses
+      # (engine, fonts, index); librsvg2-bin converts the SVG cover logo, which
+      # LaTeX can't read.
       - name: Install LaTeX
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             latexmk texlive-latex-recommended texlive-latex-extra \
-            texlive-fonts-recommended tex-gyre librsvg2-bin
+            texlive-fonts-recommended texlive-xetex fonts-freefont-otf xindy \
+            librsvg2-bin
       - name: Build PDF
         run: |
           uv run sphinx-build -W --keep-going -b latex docs docs/_build/latex

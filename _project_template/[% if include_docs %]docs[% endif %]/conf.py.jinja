@@ -84,13 +84,18 @@ html_theme_options = {
 
 # -- PDF --------------------------------------------------------------------
 [% if use_spiri_brand %]
-# The cover logo. pdflatex cannot read SVG, so spiri_docs converts this one to
-# PDF during a LaTeX build. The light variant is correct: a cover is printed.
+# The cover logo. LaTeX cannot read SVG, so spiri_docs converts this one to PDF
+# during a LaTeX build. The light variant is correct: a cover is printed.
 spiri_docs_logo = "_static/spiri-logo-light.svg"
 [% endif %]
 # spiri_docs sets latex_documents (so the file is named for the document number
 # and revision) and appends the document-control preamble. What is left here is
-# page setup.
+# the engine and page setup.
+#
+# XeLaTeX rather than pdflatex: it reads Unicode natively, so a docstring with
+# "∘" or "→" in it is typeset instead of stopping the build. pdflatex knows only
+# the characters it has been told about, one at a time.
+latex_engine = "xelatex"
 latex_elements = {
     "papersize": "letterpaper",
     "pointsize": "11pt",
