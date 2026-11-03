@@ -1,0 +1,38 @@
+# AGENTS.md
+
+[[project_name]]: [[description]]. Python >=[[python_version]], managed with `uv` (`uv.lock` is
+committed). Generated from the SpiriProjectTemplates copier template; `uvx copier update` pulls
+in template changes.
+
+## Commands
+
+- Everything CI checks: `make check`.
+- Format and autofix: `make format`.
+[% if include_tests %]
+- Tests: `uv run pytest`.
+[% endif %]
+[% if include_docs %]
+- Docs: `make docs` (Sphinx, MyST markdown; warnings are errors), `make pdf` for the controlled
+  PDF[% if use_vale %], `make lint-docs` for prose (Vale)[% endif %]. HTML is published to GitHub Pages from `main`.
+[% endif %]
+
+## Conventions
+
+[% if include_docs %]
+- The docs are a controlled document (spiri-docs, as for every Spiri manual): `revisions.yaml`
+  is the only place the document's revision is written. Revise it when what the docs say
+  changes; it's separate from the package version.
+[% endif %]
+[% if ships_image and scaffold %]
+- Settings come from `[[python_package_name|upper]]_*` environment variables (`main.Settings`).
+[% endif %]
+[% if spirisynq and ships_image %]
+- The app talks to the robot over SpiriSynq. In docker it is a client of the zenoh-router app
+  on the `spirisynq` network (`[[python_package_name|upper]]_ZENOH_CONNECT`); never put it on
+  the host network.
+[% endif %]
+- The template owns the versions it ships (base dependencies, workflow actions, the uv image)
+  and bumps them weekly; take them with `uvx copier update` and `uv lock`, not by hand.
+- Every change gets a categorized entry in `CHANGES.md` (Features / Fixes / Improvements /
+  Tests / Internal) under `## Unreleased`; commits use conventional-commit style (`feat:`,
+  `fix:`, `refactor:`).

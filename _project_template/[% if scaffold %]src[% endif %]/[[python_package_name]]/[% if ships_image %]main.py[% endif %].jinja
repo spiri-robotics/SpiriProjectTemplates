@@ -1,0 +1,92 @@
+"""Main entry point for [[project_name]]."""
+
+from __future__ import annotations
+
+[% if spirisynq %]
+import json
+[% endif %]
+import sys
+import threading
+
+[% if spirisynq %]
+import zenoh
+[% endif %]
+from loguru import logger
+from pydantic_settings import BaseSettings, SettingsConfigDict
+[% if spirisynq %]
+from SpiriSynq.session import Session, current_session
+[% endif %]
+
+from [[python_package_name]] import __version__
+
+
+class Settings(BaseSettings):
+    """Settings for [[project_name]], loaded from `[[python_package_name|upper]]_*` environment variables."""
+
+    model_config = SettingsConfigDict(
+        env_prefix="[[python_package_name|upper]]_",
+        env_file=".env",
+        extra="ignore",
+    )
+
+    app_name: str = "[[project_name]]"
+    version: str = __version__
+    environment: str = "development"
+    debug: bool = False
+[% if spirisynq %]
+    # e.g. tcp/zenoh-router:7447: join SpiriSynq as a client of that router.
+    # Unset, zenoh scouts for peers by multicast, which a docker bridge doesn't pass.
+    zenoh_connect: str | None = None
+[% endif %]
+
+
+def setup_logging(level: str = "INFO") -> None:
+    """Configure loguru logging."""
+    logger.remove()
+    logger.add(
+        sys.stderr,
+        level=level,
+        format=(
+            "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} - {message}"
+        ),
+    )
+
+
+def get_settings() -> Settings:
+    """Load settings from environment."""
+    return Settings()
+
+
+def serve(settings: Settings, stop: threading.Event | None = None) -> None:
+    """Run until *stop* is set or Ctrl-C."""
+    logger.info(
+        "Starting {} v{} [environment: {}]",
+        settings.app_name,
+        settings.version,
+        settings.environment,
+    )
+[% if spirisynq %]
+    if settings.zenoh_connect:
+        config = zenoh.Config()
+        config.insert_json5("mode", '"client"')
+        config.insert_json5("connect/endpoints", json.dumps([settings.zenoh_connect]))
+        current_session.set(Session(config=config))
+[% endif %]
+
+    # Add your application logic here.
+    stop = stop or threading.Event()
+    try:
+        stop.wait()
+    except KeyboardInterrupt:
+        logger.info("Stopping")
+
+
+def main() -> None:
+    """Main entry point."""
+    settings = get_settings()
+    setup_logging(level="DEBUG" if settings.debug else "INFO")
+    serve(settings)
+
+
+if __name__ == "__main__":
+    main()

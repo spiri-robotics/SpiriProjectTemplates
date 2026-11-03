@@ -1,0 +1,91 @@
+name: Update Template Dependencies
+
+# Weekly: bump every version the template ships (scripts/update_template.py),
+# run the full test suite against the result, and open or refresh one PR.
+# Generated projects then get the new versions with `uvx copier update`.
+#
+# A failing test run still opens the PR, as a draft, with the failure in its
+# description: that's the signal that a bump needs template changes too.
+#
+# One-time setup: Settings > Actions > General > "Allow GitHub Actions to
+# create and approve pull requests". PRs opened with the default token don't
+# trigger other workflows, hence the tests run here. To have Template Tests run
+# on the PR as well, add a TEMPLATE_UPDATE_TOKEN secret (a fine-grained token
+# with contents and pull-requests write on this repo).
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays, 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-template
+
+env:
+  ACTIONLINT_VERSION: "1.7.12"
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+
+      - name: Bump versions
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: uv run python scripts/update_template.py --summary "$RUNNER_TEMP/changes.md"
+
+      - name: Re-lock the template's own tooling
+        run: uv lock --upgrade
+
+      - name: Install actionlint
+        run: |
+          bash <(curl -sSfL "https://raw.githubusercontent.com/rhysd/actionlint/v${ACTIONLINT_VERSION}/scripts/download-actionlint.bash") "$ACTIONLINT_VERSION"
+          echo "$PWD" >> "$GITHUB_PATH"
+
+      - name: Test (all combos, including slow and docker)
+        id: test
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          uv sync --locked
+          uv run pytest -m "" -n auto 2>&1 | tee "$RUNNER_TEMP/pytest.log"
+
+      - name: Write PR description
+        env:
+          OUTCOME: ${{ steps.test.outcome }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          {
+            echo "Weekly bump of every version the template ships, by \`scripts/update_template.py\`."
+            echo "Generated projects pick these up with \`uvx copier update\` (then \`uv lock\`)."
+            echo
+            cat "$RUNNER_TEMP/changes.md"
+            echo
+            if [ "$OUTCOME" = success ]; then
+              echo "✅ Full template test suite passed on these versions ([run]($RUN_URL))."
+            else
+              echo "❌ The template test suite failed on these versions ([run]($RUN_URL)),"
+              echo "so this PR is a draft: something in the template needs changing for them."
+              echo
+              echo '```'
+              grep -E "^(FAILED|ERROR)|passed|failed" "$RUNNER_TEMP/pytest.log" | tail -30
+              echo '```'
+            fi
+          } > "$RUNNER_TEMP/body.md"
+
+      - name: Open or update the PR
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.TEMPLATE_UPDATE_TOKEN || secrets.GITHUB_TOKEN }}
+          branch: automation/update-template
+          delete-branch: true
+          commit-message: "chore(deps): update template dependencies"
+          title: "chore(deps): update template dependencies"
+          body-path: ${{ runner.temp }}/body.md
+          draft: ${{ steps.test.outcome == 'failure' }}
+          labels: dependencies

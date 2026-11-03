@@ -1,0 +1,42 @@
+name: Release
+
+# Projects pull the template's latest *tag* (`copier update`), not main, so an
+# untagged change reaches no one. Every push to main that passes Template Tests
+# is released as the next patch version, with notes generated from the merged
+# PRs. Tag a minor or major version by hand for bigger changes; the next
+# automatic release continues from it.
+on:
+  workflow_run:
+    workflows: [Template Tests]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+
+jobs:
+  release:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Tag and release the next patch version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          if git tag --points-at "$SHA" | grep -q '^v'; then
+            echo "$SHA is already released as $(git tag --points-at "$SHA")"
+            exit 0
+          fi
+          latest=$(git tag --list 'v*.*.*' --sort=-version:refname | head -1)
+          IFS=. read -r major minor patch <<< "${latest#v}"
+          next="v${major:-0}.${minor:-0}.$(( ${patch:-0} + 1 ))"
+          gh release create "$next" --target "$SHA" --generate-notes --title "$next"

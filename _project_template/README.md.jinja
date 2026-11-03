@@ -1,65 +1,67 @@
-# {{project_name}}
+# [[project_name]]
 
-{{description}}
+[[description]]
+[% if include_docs %]
 
-## Getting Started
-
-### Installation
-
-```console
-# Install dependencies
-uv sync
-
-# Generate lock file
-uv lock
-```
-
-### Run
-
-```console
-{{project_name}} --help
-```
-
-### Run as module
-
-```console
-python -m {{python_package_name}}
-```
+Documentation: https://[[github_org|lower]].github.io/[[project_name]]/
+[% endif %]
 
 ## Development
 
 ```console
-# Run tests
-python -m pytest
-python -m pytest --cov={{python_package_name}}
+uv sync          # creates .venv and uv.lock; commit uv.lock
+make check       # what CI runs: lint[% if include_tests %], tests[% endif %][% if include_docs %], docs[% endif %]
 
-# Run type checking
-python -m mypy src/ 2>/dev/null
 ```
-{% if include_docs -%}
+[% if ships_image %]
 
-## Documentation
+Run it in docker, built from this checkout:
 
 ```console
-# Install docs dependencies
-uv sync
-python -m pip install -r docs/requirements.txt
-
-# Build HTML docs
-sphinx-build -b html docs docs/_build
-
-# View docs locally
-python -m http.server --directory docs/_build 8888
+docker compose -f docker/compose.yaml -f docker/compose.dev.yaml up --build
 ```
-{% endif %}
+[% if spirisynq %]
+
+It joins the `spirisynq` docker network, which the zenoh-router app creates. Without that app
+installed, create the network by hand: `docker network create spirisynq`.
+[% endif %]
+[% endif %]
+
+## Releasing
+
+1. Move the `## Unreleased` entries in `CHANGES.md` under the new version.
+2. Bump `version` in `pyproject.toml`, then `uv lock`.
+3. Tag `vX.Y.Z` and push the tag. CI then:
+[% if ships_image %]
+   - publishes the image to `ghcr.io/[[github_org|lower]]/[[project_name|lower]]` as `X.Y.Z`,
+     `X.Y` and `latest`;
+[% endif %]
+[% if ships_package %]
+   - publishes the package to PyPI (trusted publishing; the tag must match the version);
+[% endif %]
+[% if include_docs %]
+   - attaches the docs' controlled PDF to the release.
+[% endif %]
+[% if include_docs %]
+
+## First-time GitHub setup
+
+Docs are published to GitHub Pages by `.github/workflows/docs.yml`. Turn it on once, in
+**Settings → Pages → Build and deployment → Source: GitHub Actions**.
+[% endif %]
+
+## Template
+
+Generated from [SpiriProjectTemplates](https://github.com/spiri-robotics/SpiriProjectTemplates).
+Pull in template changes with `uvx copier update`.
 
 ## License
-{% if license == "Apache-2.0" -%}
+[% if license == "Apache-2.0" %]
 Licensed under the Apache License, Version 2.0.
-{% elif license == "BSD-3-Clause" -%}
+[% elif license == "BSD-3-Clause" %]
 Licensed under the BSD 3-Clause License.
-{% elif license == "GPL-3.0-or-later" -%}
+[% elif license == "GPL-3.0-or-later" %]
 Licensed under the GNU General Public License v3.0 or later.
-{% else -%}
+[% else %]
 Licensed under the MIT License.
-{% endif %}
+[% endif %]

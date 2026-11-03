@@ -1,0 +1,56 @@
+# [[project_name]] Docker Compose - Production
+#
+# Pulls the published image:
+#   docker compose -f docker/compose.yaml up -d
+[% if spirisynq %]
+#
+# Joins the `spirisynq` network rather than relying on LAN multicast (which a
+# docker bridge doesn't pass); the zenoh-router app bridges it into the rest
+# of SpiriSynq. Install zenoh-router first.
+[% endif %]
+[% if spiri_config_plugin %]
+#
+# The `ui` service is a SpiriConfig container plugin: SpiriConfig discovers it
+# by its labels and proxies it into its shell.
+[% endif %]
+
+services:
+  app:
+    image: ${COMPONENT_IMAGE:-ghcr.io/[[github_org|lower]]/[[project_name|lower]]:latest}
+    restart: unless-stopped
+[% if spirisynq %]
+    networks:
+      - spirisynq
+    volumes:
+      # The host's hostname, so SpiriSynq names this robot after the machine
+      # and not the container. Not over /etc/hostname: that would clobber the
+      # container's own.
+      - /etc/hostname:/etc/spirisynq_base_topic:ro
+[% endif %]
+    environment:
+      - [[python_package_name|upper]]_ENVIRONMENT=${ENVIRONMENT:-production}
+[% if spirisynq %]
+      - [[python_package_name|upper]]_ZENOH_CONNECT=${ZENOH_CONNECT:-tcp/zenoh-router:7447}
+[% endif %]
+[% if spiri_config_plugin %]
+
+  ui:
+    image: ${COMPONENT_IMAGE:-ghcr.io/[[github_org|lower]]/[[project_name|lower]]:latest}
+    restart: unless-stopped
+    command: ["[[project_name]]", "web", "--port", "8080"]
+[% if spirisynq %]
+    networks:
+      - spirisynq
+[% endif %]
+    labels:
+      spiriconfig.plugin.name: [[project_name|lower]]
+      spiriconfig.plugin.port: "8080"
+      spiriconfig.plugin.title: [[project_name]]
+[% endif %]
+[% if spirisynq %]
+
+networks:
+  spirisynq:
+    name: spirisynq
+    external: true
+[% endif %]

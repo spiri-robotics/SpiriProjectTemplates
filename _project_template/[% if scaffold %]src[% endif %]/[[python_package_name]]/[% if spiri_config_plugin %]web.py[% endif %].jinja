@@ -1,0 +1,29 @@
+"""Web UI for [[project_name]]: a SpiriConfig container plugin.
+
+SpiriConfig finds this container by its `spiriconfig.plugin.*` labels (see
+docker/compose.yaml) and proxies it into its shell at `/plugin/[[project_name]]/`.
+NiceGUI honours the proxy's `X-Forwarded-Prefix`, so nothing here needs to know that.
+"""
+
+from __future__ import annotations
+
+from nicegui import ui
+
+from [[python_package_name]] import __version__
+
+
+@ui.page("/")
+def index() -> None:
+    """Render the plugin page."""
+    ui.label("[[project_name]]").classes("text-2xl font-bold")
+    ui.label(f"Version {__version__}").classes("text-sm text-gray-500")
+    ui.separator()
+
+    with ui.card():
+        ui.label("Status").classes("text-lg font-bold")
+        ui.label("Running")
+
+
+def serve(port: int = 8080) -> None:
+    """Serve the UI until interrupted."""
+    ui.run(title="[[project_name]]", port=port, reload=False, show=False, dark=None)

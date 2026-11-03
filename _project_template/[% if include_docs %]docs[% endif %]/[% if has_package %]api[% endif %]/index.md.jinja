@@ -1,0 +1,34 @@
+(api-reference)=
+
+# API Reference
+
+<!-- autodoc emits reStructuredText, so its directives go in eval-rst blocks. -->
+[% if scaffold %]
+[% if ships_image %]
+
+## Settings and main loop
+
+```{eval-rst}
+.. automodule:: [[ python_package_name ]].main
+```
+[% endif %]
+
+## Command line
+
+```{eval-rst}
+.. automodule:: [[ python_package_name ]].cli
+```
+[% if spiri_config_plugin %]
+
+## Web UI
+
+```{eval-rst}
+.. automodule:: [[ python_package_name ]].web
+```
+[% endif %]
+[% else %]
+
+```{eval-rst}
+.. automodule:: [[ python_package_name ]]
+```
+[% endif %]

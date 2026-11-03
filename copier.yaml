@@ -1,29 +1,62 @@
 # Copier configuration for Spiri project templates.
 #
-# To use: uvx copier https://github.com/spiri-robotics/SpiriProjectTemplates ./new-project
+# To use: uvx copier copy gh:spiri-robotics/SpiriProjectTemplates ./new-project
+# To pull template changes into a generated project: uvx copier update
 
 # ---------------------------------------------------------------------------
 # Copier options
 
 _subdirectory: _project_template
+_answers_file: .copier-answers.yml
+_min_copier_version: "9.4"
+# Bracket delimiters, as in spiri-docs-tooling: workflows and MyST are full of
+# `${{ ... }}` and `{{ ... }}`, which then pass through as the literal text they are.
+# A `[% if %]` line leaves no blank line behind, so output passes ruff format.
+_envops:
+  block_start_string: "[%"
+  block_end_string: "%]"
+  variable_start_string: "[["
+  variable_end_string: "]]"
+  comment_start_string: "[#"
+  comment_end_string: "#]"
+  trim_blocks: true
+  lstrip_blocks: true
+  keep_trailing_newline: true
 
 # ---------------------------------------------------------------------------
 # Template variables (copier questions)
 
 project_name:
   type: str
-  help: Project name (e.g. "my-sensor-pipeline")
-  default: "my-spiri-project"
+  help: Project name, as the repo is named (e.g. "SpiriSensor")
+  default: "SpiriExample"
+  validator: >-
+    [% if not (project_name | regex_search('^[A-Za-z][A-Za-z0-9._-]*$')) %]
+    Must start with a letter and contain only letters, digits, '.', '_' and '-'.
+    [% endif %]
+
+python_package_name:
+  type: str
+  # CamelCase like the repo (SpiriGateway, SpiriCamera): "my-sensor" becomes
+  # "MySensor", "SpiriSensor" stays as it is.
+  help: Python package (import) name
+  default: >-
+    [%- for part in project_name.replace('-', ' ').replace('_', ' ').replace('.', ' ').split() -%]
+    [[ part[0] | upper ]][[ part[1:] ]]
+    [%- endfor -%]
+  validator: >-
+    [% if not (python_package_name | regex_search('^[A-Za-z_][A-Za-z0-9_]*$')) %]
+    Must be a valid Python identifier.
+    [% endif %]
 
 python_version:
   type: str
   help: Minimum Python version
   default: "3.13"
-
-python_package_name:
-  type: str
-  help: Python package name (auto-populated from project_name)
-  default: "{{project_name|replace('-', '_')|replace('.', '_')}}"
+  validator: >-
+    [% if not (python_version | regex_search('^3[.][0-9]+$')) %]
+    Must look like 3.13.
+    [% endif %]
 
 description:
   type: str
@@ -45,6 +78,11 @@ author_email:
   help: Author email
   default: ""
 
+github_org:
+  type: str
+  help: GitHub organisation or user the repo lives under (for docs and image URLs)
+  default: "spiri-robotics"
+
 license:
   type: str
   help: Software license
@@ -55,32 +93,113 @@ license:
     - BSD-3-Clause
     - GPL-3.0-or-later
 
+kind:
+  type: str
+  help: What the project ships
+  choices:
+    "App: a docker image, run on the robot": app
+    "Library: a package on PyPI, imported by other projects": library
+    "Both: a docker image and a PyPI package (like SpiriConfig)": both
+    "Stack: several images and compose apps, no Python package (like SpiriDevelopmentKit)": stack
+  default: app
+
+scaffold:
+  type: bool
+  help: >-
+    Generate starter code (package, CLI, tests)? Say no when bringing an existing
+    project onto the template: it keeps its own code (moved under src/, the one
+    layout every project uses), and gets the template's config, CI and docs.
+  default: "[[ kind != 'stack' ]]"
+  when: "[[ kind != 'stack' ]]"
+
+# Derived rather than asked (and so not stored in the answers file).
+ships_image:
+  type: bool
+  default: "[[ kind in ['app', 'both'] ]]"
+  when: false
+
+ships_package:
+  type: bool
+  default: "[[ kind in ['library', 'both'] ]]"
+  when: false
+
+# A stack has no Python package: its pyproject.toml only pins the tools that
+# lint it and build its docs.
+has_package:
+  type: bool
+  default: "[[ kind != 'stack' ]]"
+  when: false
+
+spirisynq:
+  type: bool
+  help: Talk to the robot over SpiriSynq (zenoh, on the `spirisynq` docker network)?
+  default: "[[ kind in ['app', 'both'] ]]"
+  when: "[[ kind != 'stack' ]]"
+
 spiri_config_plugin:
   type: bool
-  help: Add SpiriConfig plugin interface (entry point registration, plugin class)?
+  help: Serve a web UI as a SpiriConfig container plugin (compose labels, NiceGUI)?
   default: false
+  when: "[[ kind in ['app', 'both'] ]]"
 
 include_tests:
   type: bool
-  help: Include a tests/ directory with pytest setup and example test?
+  help: Run tests in CI (pytest)? With starter code, also generates example tests.
   default: true
 
 include_docs:
   type: bool
-  help: Include a docs/ directory with Sphinx setup?
-  default: false
+  help: >-
+    Include docs/: a controlled document (spiri-docs) with an API reference, built as
+    HTML and as a PDF attached to every release?
+  default: true
 
-spiri_branding:
+# The docs questions below are spiri-docs-tooling's, with the same names and
+# meanings, so a project's docs and a manual are described the same way.
+
+document_number:
+  type: str
+  help: >-
+    The controlled document number. Printed on every page and used as the PDF
+    filename, so pick the form you want to live with (e.g. SPIRI-SW-001).
+  default: "SPIRI-[[ python_package_name | upper ]]-001"
+  when: "[[ include_docs ]]"
+
+audience:
+  type: str
+  help: >-
+    Who reads the docs. Regulator-facing documents must name an approver and an
+    effective date for every revision; the build fails if they are missing.
+  choices:
+    "Customer-facing: shipped to operators and customers": customer
+    "Regulator-facing: submitted to a civil aviation authority": regulator
+    "Internal only": internal
+  default: customer
+  when: "[[ include_docs ]]"
+
+distribution_statement:
+  type: str
+  help: Printed on the cover. Leave blank for none.
+  default: Uncontrolled when printed.
+  when: "[[ include_docs ]]"
+
+use_spiri_brand:
   type: bool
-  help: Use Spiri branding (copyright, logo, links to Spiri resources)?
-  default: false
+  help: >-
+    Apply Spiri brand guidelines to the docs: the logo and the house palette. Say no
+    for docs published under someone else's name. Hazard colours are unaffected.
+  default: true
+  when: "[[ include_docs ]]"
+
+use_vale:
+  type: bool
+  help: >-
+    Check the docs' prose with Vale (Microsoft style, Spiri vocabulary). Advisory in
+    CI: it reports, never blocks.
+  default: true
+  when: "[[ include_docs ]]"
 
 include_nix:
   type: bool
-  help: Include a flake.nix for reproducible builds?
+  help: Include a nix/flake.nix dev shell?
   default: true
-
-_answers_file: .copier-answers.yaml
-answers_file: ".copier-answers.yaml"
-
-conflict: old

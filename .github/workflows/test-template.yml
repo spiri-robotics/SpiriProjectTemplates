@@ -1,43 +1,62 @@
 name: Template Tests
 
+# Generates projects from this template and holds them to their own CI: what
+# they lint, test, document and build here is what a new project gets.
 on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  # Bumped by scripts/update_template.py, like every other version here.
+  ACTIONLINT_VERSION: "1.7.12"
 
 jobs:
-  test:
+  generation:
+    name: Generation (fast)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+      - name: Install actionlint
+        run: |
+          bash <(curl -sSfL "https://raw.githubusercontent.com/rhysd/actionlint/v${ACTIONLINT_VERSION}/scripts/download-actionlint.bash") "$ACTIONLINT_VERSION"
+          echo "$PWD" >> "$GITHUB_PATH"
+      - name: Install dependencies
+        run: uv sync --locked
+      - name: Lint test code
+        run: |
+          uv run ruff format --check .
+          uv run ruff check .
+      - name: Run tests
+        # The 3 option combos x every check, including actionlint on the generated workflows.
+        run: uv run pytest -v
+
+  toolchain:
+    name: Toolchain (${{ matrix.combo }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-
+      matrix:
+        combo: [minimal, default, library, stack, full]
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-
-      - name: Create virtual environment
-        run: uv venv
-
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
       - name: Install dependencies
-        run: uv pip install pytest copier jinja2 toml pyyaml
-
-      - name: Run tests
-        run: uv run pytest tests/ -v
-
-      - name: Generate a sample project for workflow linting
+        run: uv sync --locked
+      # The same packages as a generated project's docs workflow, so the PDF test
+      # runs here rather than skipping.
+      - name: Install LaTeX
+        if: matrix.combo != 'minimal'
         run: |
-          uv run copier copy --trust --defaults . /tmp/sample-default
-
-      - name: Install actionlint
-        run: curl -sL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash | bash
-
-      - name: Lint generated GitHub Actions workflows
-        run: ./actionlint /tmp/sample-default/.github/workflows/*.yml
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            latexmk texlive-latex-recommended texlive-latex-extra \
+            texlive-fonts-recommended tex-gyre librsvg2-bin
+      - name: Install, test and build docs in the generated project
+        run: uv run pytest -v -m slow -k "${{ matrix.combo }}"
+      - name: Build the generated project's image and run its tests in it
+        run: uv run pytest -v -m docker -k "${{ matrix.combo }}"

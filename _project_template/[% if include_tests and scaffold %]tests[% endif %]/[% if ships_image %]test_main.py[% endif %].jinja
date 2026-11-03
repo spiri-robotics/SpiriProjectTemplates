@@ -1,0 +1,18 @@
+"""Tests for [[project_name]]'s settings and main loop."""
+
+from __future__ import annotations
+
+import threading
+
+from [[python_package_name]].main import Settings, serve
+
+
+def test_settings_from_environment(monkeypatch) -> None:
+    monkeypatch.setenv("[[python_package_name|upper]]_DEBUG", "true")
+    assert Settings().debug is True
+
+
+def test_serve_returns_when_stopped() -> None:
+    stop = threading.Event()
+    stop.set()
+    serve(Settings(), stop=stop)

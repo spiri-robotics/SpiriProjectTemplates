@@ -33,8 +33,13 @@ htmlcov/
 .coverage.*
 *.coverage
 
-# Compiled deps
-uv.lock
+# Docs build output
+docs/_build/
+
+# `vale sync` downloads style packages into styles/. The vocabulary under
+# styles/config is ours and is committed; everything else is fetched.
+styles/*
+!styles/config/
 
 # OS
 .DS_Store
