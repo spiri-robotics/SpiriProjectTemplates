@@ -40,6 +40,15 @@ def test_actions_bumped_to_latest_major():
     assert changes == [("actions/checkout", "v4", "v5")]
 
 
+def test_full_version_pins_stay_full():
+    # astral-sh/setup-uv publishes no `v6` tag, only `v6.4.0`.
+    text = "      - uses: astral-sh/setup-uv@v6.3.1\n      - uses: actions/checkout@v5\n"
+    new, changes = ut.bump_actions(text, GITHUB.__getitem__)
+    assert "astral-sh/setup-uv@v6.4.0\n" in new
+    assert "actions/checkout@v5\n" in new
+    assert changes == [("astral-sh/setup-uv", "v6.3.1", "v6.4.0")]
+
+
 def test_uv_image_keeps_major_minor():
     text = "COPY --from=ghcr.io/astral-sh/uv:0.9 /uv /usr/local/bin/uv\n"
     new, changes = ut.bump_pattern(

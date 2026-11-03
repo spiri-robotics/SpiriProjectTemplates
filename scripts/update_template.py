@@ -7,7 +7,8 @@ dependency updates happen, not in each project. Run weekly by
 What it bumps:
 
 - `name>=X` lower bounds in pyproject.toml files (latest release on PyPI)
-- `uses: owner/repo@vN` in workflows (latest release's major version)
+- `uses: owner/repo@vN` in workflows (latest release's major version), or
+  `@vX.Y.Z` for actions that publish no major tags (astral-sh/setup-uv)
 - the `ghcr.io/astral-sh/uv:X.Y` image in the Dockerfile (latest uv)
 - `ACTIONLINT_VERSION` in the template's CI (latest actionlint)
 
@@ -41,7 +42,9 @@ DOCKERFILE_GLOB = "_project_template/**/Dockerfile*.jinja"
 REQUIREMENT = re.compile(
     r'"(?P<name>[A-Za-z0-9][A-Za-z0-9._-]*)(?P<extras>\[[^\]]*\])?>=(?P<version>[0-9][^",;\s]*)"'
 )
-ACTION = re.compile(r"(?P<prefix>uses:\s*)(?P<repo>[\w.-]+/[\w.-]+)@(?P<version>v\d+)\b")
+ACTION = re.compile(
+    r"(?P<prefix>uses:\s*)(?P<repo>[\w.-]+/[\w.-]+)@(?P<version>v\d+(?:\.\d+)*)(?![\w.])"
+)
 UV_IMAGE = re.compile(r"(?P<prefix>ghcr\.io/astral-sh/uv:)(?P<version>\d+\.\d+)\b")
 ACTIONLINT = re.compile(r'(?P<prefix>ACTIONLINT_VERSION:\s*")(?P<version>[\d.]+)(?=")')
 
@@ -85,11 +88,14 @@ def bump_actions(text: str, latest: Callable[[str], str]) -> tuple[str, list[Cha
     changes: list[Change] = []
 
     def replace(m: re.Match) -> str:
-        major = f"v{Version(latest(m['repo'])).major}"
-        if int(major[1:]) <= int(m["version"][1:]):
+        # Keep the pin's form: some actions only tag full versions, so `@v10` would
+        # name a tag that doesn't exist.
+        new = Version(latest(m["repo"]))
+        new = f"v{new}" if "." in m["version"] else f"v{new.major}"
+        if Version(new) <= Version(m["version"]):
             return m[0]
-        changes.append((m["repo"], m["version"], major))
-        return f"{m['prefix']}{m['repo']}@{major}"
+        changes.append((m["repo"], m["version"], new))
+        return f"{m['prefix']}{m['repo']}@{new}"
 
     return ACTION.sub(replace, text), changes
 
