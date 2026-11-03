@@ -55,7 +55,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             latexmk texlive-latex-recommended texlive-latex-extra \
-            texlive-fonts-recommended tex-gyre librsvg2-bin
+            texlive-fonts-recommended texlive-xetex fonts-freefont-otf xindy \
+            librsvg2-bin
       - name: Install, test and build docs in the generated project
         run: uv run pytest -v -m slow -k "${{ matrix.combo }}"
       - name: Build the generated project's image and run its tests in it

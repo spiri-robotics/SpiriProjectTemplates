@@ -95,9 +95,25 @@ def test_docs_build_without_warnings(synced, answers):
 @pytest.mark.slow
 @pytest.mark.skipif(not shutil.which("latexmk"), reason="LaTeX not installed")
 def test_pdf_builds(synced, answers):
-    """The controlled PDF, named by spiri_docs for the document number and revision."""
+    """The controlled PDF, named by spiri_docs for the document number and revision.
+
+    Non-ASCII text, as docstrings have, must not stop the build: pdflatex did.
+    """
     if not answers["include_docs"]:
         pytest.skip("no docs")
+    index = synced / "docs/index.md"
+    original = index.read_text()
+    index.write_text(original + "\nT_child = T_parent ∘ T_mount → café, 50 µm, ±2°.\n")
+    try:
+        _build_pdf(synced)
+    finally:
+        index.write_text(original)
+    name = run(["uv", "run", "python", "-m", "spiri_docs", "name"], cwd=synced).stdout.strip()
+    assert name.startswith(answers["document_number"])
+    assert (synced / "docs/_build/latex" / f"{name}.pdf").stat().st_size > 10_000
+
+
+def _build_pdf(synced):
     # The docs workflow's commands.
     run(
         [
@@ -115,9 +131,6 @@ def test_pdf_builds(synced, answers):
         timeout=300,
     )
     run(["make", "-C", "docs/_build/latex", "all-pdf"], cwd=synced, timeout=600)
-    name = run(["uv", "run", "python", "-m", "spiri_docs", "name"], cwd=synced).stdout.strip()
-    assert name.startswith(answers["document_number"])
-    assert (synced / "docs/_build/latex" / f"{name}.pdf").stat().st_size > 10_000
 
 
 @pytest.mark.slow
