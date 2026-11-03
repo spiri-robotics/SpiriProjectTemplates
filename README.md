@@ -186,9 +186,10 @@ One-time setup:
 
 ## Docker Image Publishing
 
-`.github/workflows/docker-publish.yml` builds the image on every PR without pushing it. It pushes
-on every push to `main` (tagged `edge`) and on version tags matching `v*.*.*` (tagged with the
-semver, e.g. `1.2.3` and `1.2`, and `latest`).
+`.github/workflows/docker-publish.yml` builds the image for amd64 and arm64 (what runs on the
+robot), each on a native GitHub runner, and publishes them as one multi-arch tag. It builds on
+every PR without pushing. It pushes on every push to `main` (tagged `edge`) and on version tags
+matching `v*.*.*` (tagged with the semver, e.g. `1.2.3` and `1.2`, and `latest`).
 
 It publishes to GHCR by default using the built-in `GITHUB_TOKEN`, so there's nothing to set up.
 To publish elsewhere instead, set repository variables (**Settings → Secrets and variables →
