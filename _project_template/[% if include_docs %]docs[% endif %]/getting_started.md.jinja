@@ -1,0 +1,55 @@
+# Getting Started
+
+## Installation
+
+[% if ships_package %]
+Add [[ project_name ]] to a project:
+
+```console
+uv add [[ project_name ]]
+```
+
+Or work on it from a checkout:
+[% else %]
+From a checkout:
+[% endif %]
+
+```console
+uv sync
+```
+[% if ships_image %]
+
+## Configuration
+
+[[ project_name ]] runs with sensible defaults. To change them, set environment variables with the
+`[[ python_package_name | upper ]]_` prefix, or put them in a `.env` file:
+
+```console
+export [[ python_package_name | upper ]]_ENVIRONMENT=production
+export [[ python_package_name | upper ]]_DEBUG=true
+```
+
+See `Settings` in the {ref}`api-reference` for every option.
+
+## Running
+
+```console
+uv run [[ project_name ]] --help
+uv run [[ project_name ]] run
+```
+
+Or in docker, built from this checkout:
+
+```console
+docker compose -f docker/compose.yaml -f docker/compose.dev.yaml up --build
+```
+[% elif has_package %]
+
+## Using it
+
+```python
+import [[ python_package_name ]]
+```
+
+See the {ref}`api-reference`.
+[% endif %]

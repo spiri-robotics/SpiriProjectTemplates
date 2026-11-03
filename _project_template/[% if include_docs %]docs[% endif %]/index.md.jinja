@@ -1,0 +1,41 @@
+---
+orphan: false
+---
+
+# [[ project_name ]]
+
+:::{admonition} Document control
+:class: note
+
+| | |
+| --- | --- |
+| Document number | **{{ document_number }}** |
+| Revision | **{{ revision }}** |
+| Status | {{ document_status }} |
+| Effective date | {{ effective_date }} |
+[% if audience == 'regulator' %]| Approved by | {{ approver }} |
+[% endif %]| Issued by | [[ author_name or 'Spiri Robotics' ]] |
+[% if distribution_statement %]
+
+{{ distribution_statement }}
+[% endif %]
+:::
+
+[[ description ]]
+
+```{toctree}
+:maxdepth: 2
+:numbered:
+
+getting_started
+[% if has_package %]
+api/index
+[% endif %]
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: Document control
+
+revisions
+```

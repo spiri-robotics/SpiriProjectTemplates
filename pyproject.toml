@@ -1,6 +1,32 @@
+[project]
+name = "spiri-project-templates"
+version = "0.0.0"
+description = "Copier template for Spiri projects (not a package; this holds the template's test tooling)"
+requires-python = ">=3.13"
+dependencies = []
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = [
+    "copier>=9.19.1",
+    "packaging>=26.3",
+    "pytest>=9.2.0",
+    "pytest-xdist>=3.8.0",
+    "pyyaml>=6.0.3",
+    "ruff>=0.17.3",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# The fast suite by default; `-m slow` or `-m docker` on the command line overrides this.
+addopts = ["-m", "not slow and not docker"]
 markers = [
-    "slow: tests that take a significant amount of time (e2e, generated project)",
-    "integration: tests that require copier to generate a full project",
+    "slow: generates a project and runs its own toolchain (uv sync, pytest, docs build); needs network",
+    "docker: builds the generated project's image; needs a docker daemon",
 ]
+
+[tool.ruff]
+line-length = 100
+extend-exclude = ["_project_template"]

@@ -1,0 +1,31 @@
+# [[project_name]] Docker Compose - Development Override
+#
+# Builds from local source, with the package mounted so code changes need only a restart:
+#   docker compose -f docker/compose.yaml -f docker/compose.dev.yaml up --build
+[% if spirisynq %]
+#
+# Needs the `spirisynq` network, which the zenoh-router app creates. Without it:
+#   docker network create spirisynq
+[% endif %]
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: dev
+    image: [[project_name|lower]]:dev
+    volumes:
+      - ../src:/app/src:ro
+    environment:
+      - [[python_package_name|upper]]_ENVIRONMENT=development
+      - [[python_package_name|upper]]_DEBUG=true
+[% if spiri_config_plugin %]
+
+  ui:
+    image: [[project_name|lower]]:dev
+    volumes:
+      - ../src:/app/src:ro
+    ports:
+      - "127.0.0.1:8080:8080"
+[% endif %]

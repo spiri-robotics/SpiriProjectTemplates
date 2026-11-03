@@ -1,0 +1,19 @@
+{
+  "name": "[[project_name]]",
+  "dockerComposeFile": ["../docker/compose.yaml", "../docker/compose.dev.yaml"],
+  "service": "app",
+  "workspaceFolder": "/app",
+  "overrideCommand": true,
+  "postCreateCommand": "uv sync",
+  "remoteUser": "root",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["charliermarsh.ruff", "ms-python.python"]
+    }
+  }[% if spiri_config_plugin %],
+  "forwardPorts": [8080][% endif %]
+
+}

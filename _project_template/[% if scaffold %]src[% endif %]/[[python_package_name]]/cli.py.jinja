@@ -1,0 +1,60 @@
+"""CLI interface for [[project_name]]."""
+
+from __future__ import annotations
+
+import sys
+from typing import Annotated
+
+import typer
+from loguru import logger
+
+from [[python_package_name]] import __version__
+
+app = typer.Typer(
+    name="[[project_name]]",
+    help="[[description]]",
+    no_args_is_help=True,
+    pretty_exceptions_short=True,
+)
+
+
+@app.callback()
+def main_callback(
+    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Enable debug logging")] = False,
+) -> None:
+    """[[description]]"""
+    logger.remove()
+    logger.add(sys.stderr, level="DEBUG" if verbose else "INFO")
+
+
+@app.command()
+def version() -> None:
+    """Show version information."""
+    typer.echo(f"[[project_name]] {__version__}")
+    typer.echo(f"Python {sys.version.split()[0]}")
+[% if ships_image %]
+
+
+@app.command()
+def run() -> None:
+    """Run [[project_name]] until interrupted."""
+    from [[python_package_name]].main import get_settings, serve
+
+    serve(get_settings())
+[% endif %]
+[% if spiri_config_plugin %]
+
+
+@app.command()
+def web(
+    port: Annotated[int, typer.Option(help="Port to serve the web UI on")] = 8080,
+) -> None:
+    """Serve the web UI (the SpiriConfig plugin page)."""
+    from [[python_package_name]].web import serve
+
+    serve(port=port)
+[% endif %]
+
+
+if __name__ == "__main__":
+    app()
