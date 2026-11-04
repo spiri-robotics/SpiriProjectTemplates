@@ -28,7 +28,9 @@ Then on GitHub, once:
 - **Settings → Pages → Source: Deploy from a branch → `gh-pages`, `/ (root)`**, once the first
   docs run on `main` has created that branch, so the docs publish.
 - **Settings → Actions → General → Allow GitHub Actions to create and approve pull requests**,
-  for the weekly template update.
+  and a `TEMPLATE_UPDATE_TOKEN` secret with contents, pull-requests and workflows write, for the
+  weekly template update. Both are best set once for the whole org. Without the token, an update
+  that changes a workflow file can't be pushed.
 
 ## Bringing an Existing Project onto the Template
 
@@ -187,9 +189,9 @@ Python is an upgrade to decide on.
 One-time setup:
 
 - **Settings → Actions → General → Allow GitHub Actions to create and approve pull requests.**
-- Optionally, a `TEMPLATE_UPDATE_TOKEN` secret: a fine-grained token with contents and
-  pull-requests write on this repo. PRs opened with the default token don't trigger other
-  workflows, so without it the PR only carries the update job's own test result.
+- A `TEMPLATE_UPDATE_TOKEN` secret: a token with contents, pull-requests and workflows write.
+  It's required in practice: GitHub refuses to let the default token change a workflow file,
+  and most updates do. PRs opened with it also trigger the normal CI.
 
 ## Docker Image Publishing
 
