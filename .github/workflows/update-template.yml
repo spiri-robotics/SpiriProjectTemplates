@@ -7,11 +7,14 @@ name: Update Template Dependencies
 # A failing test run still opens the PR, as a draft, with the failure in its
 # description: that's the signal that a bump needs template changes too.
 #
-# One-time setup: Settings > Actions > General > "Allow GitHub Actions to
-# create and approve pull requests". PRs opened with the default token don't
-# trigger other workflows, hence the tests run here. To have Template Tests run
-# on the PR as well, add a TEMPLATE_UPDATE_TOKEN secret (a fine-grained token
-# with contents and pull-requests write on this repo).
+# One-time setup:
+# - Settings > Actions > General > "Allow GitHub Actions to create and approve
+#   pull requests".
+# - A TEMPLATE_UPDATE_TOKEN secret: a token with contents, pull-requests and
+#   workflows write. It's required in practice: GitHub refuses to let the default
+#   token change a workflow file, and action bumps do. It also has Template Tests
+#   run on the PR, which a PR opened with the default token wouldn't trigger;
+#   hence the tests run here too.
 on:
   schedule:
     - cron: "0 6 * * 1" # Mondays, 06:00 UTC

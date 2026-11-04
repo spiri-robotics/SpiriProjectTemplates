@@ -90,6 +90,8 @@ def test_docs_build_without_warnings(synced, answers):
     index = (html / "index.html").read_text()
     assert answers["document_number"] in index
     assert "{{" not in index
+    # The version switcher is in the sidebar, hidden until versions.json fills it.
+    assert '<div class="spiri-versions" hidden>' in index
 
 
 @pytest.mark.slow
