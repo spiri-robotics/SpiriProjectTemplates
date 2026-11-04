@@ -49,6 +49,8 @@ CONDITIONAL = {
             "docs/_static/custom.css",
             "revisions.yaml",
             ".github/workflows/docs.yml",
+            ".github/scripts/publish_docs.py",
+            "docs/_templates/versions.html",
         ],
     ),
     "image": (
@@ -189,18 +191,26 @@ def test_image_names_are_lowercase(project):
             assert image == image.lower(), f"{p.name}: {image}"
 
 
-def test_docs_workflow_deploys_to_pages(project, answers):
+def test_docs_workflow_publishes_versions(project, answers):
     if not answers["include_docs"]:
         pytest.skip("no docs")
     workflow = yaml.safe_load((project / ".github/workflows/docs.yml").read_text())
-    steps = [s.get("uses", "") for job in workflow["jobs"].values() for s in job["steps"]]
-    assert any(s.startswith("actions/upload-pages-artifact@") for s in steps)
-    assert any(s.startswith("actions/deploy-pages@") for s in steps)
-    deploy = workflow["jobs"]["deploy"]
-    assert deploy["permissions"] == {"pages": "write", "id-token": "write"}
-    assert "refs/heads/main" in deploy["if"]
     build_cmds = " ".join(s.get("run", "") for s in workflow["jobs"]["build"]["steps"])
     assert "sphinx-build -W" in build_cmds
+    # Main and release tags publish; PRs don't. gh-pages is the site, so no
+    # Actions Pages deployment.
+    publish = workflow["jobs"]["publish"]
+    assert "refs/heads/main" in publish["if"]
+    assert "refs/tags/v" in publish["if"]
+    assert "pull_request" in publish["if"]
+    assert publish["permissions"] == {"contents": "write"}
+    assert set(publish["needs"]) == {"build", "pdf"}
+    steps = " ".join(s.get("run", "") for s in publish["steps"])
+    assert ".github/scripts/publish_docs.py" in steps
+    assert "deploy" not in workflow["jobs"]
+    conf = (project / "docs/conf.py").read_text()
+    assert '"versions.html"' in conf
+    assert conf.count('html_baseurl = "') == 1 and '/latest/"' in conf
 
 
 def test_docs_branding(project, answers):

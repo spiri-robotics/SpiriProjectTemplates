@@ -25,7 +25,8 @@ git init && git add -A && git commit -m "feat: generate from SpiriProjectTemplat
 
 Then on GitHub, once:
 
-- **Settings → Pages → Source: GitHub Actions**, so the docs publish.
+- **Settings → Pages → Source: Deploy from a branch → `gh-pages`, `/ (root)`**, once the first
+  docs run on `main` has created that branch, so the docs publish.
 - **Settings → Actions → General → Allow GitHub Actions to create and approve pull requests**,
   for the weekly template update.
 
@@ -109,10 +110,11 @@ SpiriSensor/
 ├── docker/                 # apps: Dockerfile (builder, dev, runtime) and compose files
 ├── .github/workflows/
 │   ├── lint-test.yml       # ruff, pytest (and pytest in the image)
-│   ├── docs.yml            # HTML to Pages, the controlled PDF, Vale
+│   ├── docs.yml            # every version's HTML and PDF to Pages, Vale
 │   ├── docker-publish.yml  # apps: image to GHCR
 │   ├── pypi-publish.yml    # libraries: package to PyPI (trusted publishing)
 │   └── template-update.yml # weekly `copier update` PR
+├── .github/scripts/publish_docs.py  # lays out the versioned docs site on gh-pages
 ├── .devcontainer/          # apps
 └── nix/flake.nix
 ```
@@ -147,10 +149,15 @@ it, and fails the build if a regulator-facing revision has no approver.
 
 `.github/workflows/docs.yml`:
 
-- builds the HTML on every PR with `sphinx-build -W` (warnings are errors) and publishes it to
-  GitHub Pages from `main`, at `https://<github_org>.github.io/<project_name>/`;
-- builds the PDF with LaTeX on every run, and attaches it to the release on a `vX.Y.Z` tag. That
-  release asset is the controlled copy; it says DRAFT if the revision is one;
+- builds the HTML on every PR with `sphinx-build -W` (warnings are errors), and the PDF with
+  LaTeX, so a release never finds a broken PDF for the first time;
+- publishes every version side by side on GitHub Pages, at
+  `https://<github_org>.github.io/<project_name>/`: `main` as `dev/`, each `vX.Y.Z` tag as its
+  own directory, and `latest/` as the newest release, each with its PDF. A switcher in the
+  sidebar moves between them, and `versions.json` lists them for the org's home page.
+  `.github/scripts/publish_docs.py` lays the site out on the `gh-pages` branch;
+- attaches the PDF to the release on a `vX.Y.Z` tag. That release asset is the controlled copy;
+  it says DRAFT if the revision is one;
 - checks prose with Vale (Microsoft style, Spiri vocabulary). Advisory: it never blocks.
 
 The document's revision is separate from the software's version: revise it when what the docs
