@@ -12,13 +12,13 @@ license = "[[license]]"
 dependencies = [
     "loguru>=0.7.3",
 [% if spiri_config_plugin %]
-    "nicegui>=3.19.0",
+    "nicegui>=4.0.0",
 [% endif %]
     "pydantic-settings>=2.16.2",
 [% if spirisynq %]
     "spirisynq>=0.6.0",
 [% endif %]
-    "typer>=0.27.3",
+    "typer>=0.28.0",
 ]
 [% else %]
 # The project's own: without starter code, the template has no dependencies to add.
@@ -65,7 +65,7 @@ ignore = ["N999", "B008", "SIM117"]
 dev = [
     "pytest>=9.2.0",
     "pytest-cov>=7.1.0",
-    "ruff>=0.17.3",
+    "ruff>=0.17.4",
 ]
 [% if include_docs %]
 docs = [
@@ -74,6 +74,6 @@ docs = [
     "sphinx>=9.2.0",
     # Document control, PDF footer and naming, safety panels: the same extension
     # every Spiri manual uses. https://github.com/spiri-robotics/spiri-docs-tooling
-    "spiri-docs>=0.2.0",
+    "spiri-docs>=0.3.0",
 ]
 [% endif %]
